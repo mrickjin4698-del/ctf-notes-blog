@@ -1,0 +1,85 @@
+<script>
+  document.querySelectorAll<HTMLPreElement>('pre.astro-code').forEach((pre, index) => {
+    if (pre.parentElement?.classList.contains('code-block')) return;
+
+    const code = pre.querySelector('code');
+    if (!code) return;
+    const language = pre.dataset.language || 'text';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    const toolbar = document.createElement('div');
+    toolbar.className = 'code-toolbar';
+    const label = document.createElement('span');
+    label.className = 'code-language';
+    label.textContent = language;
+    const tools = document.createElement('div');
+    tools.className = 'code-tools';
+    const wrapButton = document.createElement('button');
+    wrapButton.type = 'button';
+    wrapButton.textContent = '自动换行';
+    wrapButton.setAttribute('aria-pressed', 'false');
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.textContent = '复制';
+    copyButton.setAttribute('aria-label', '复制 ' + language + ' 代码');
+    const status = document.createElement('span');
+    status.className = 'sr-only';
+    status.setAttribute('role', 'status');
+
+    pre.id ||= 'code-' + index;
+    pre.tabIndex = 0;
+    pre.setAttribute('aria-label', language + ' 代码，可使用方向键横向滚动');
+    wrapButton.setAttribute('aria-controls', pre.id);
+    pre.before(wrapper);
+    tools.append(wrapButton, copyButton);
+    toolbar.append(label, tools);
+    wrapper.append(toolbar, pre, status);
+
+    wrapButton.addEventListener('click', () => {
+      const wrapped = wrapper.classList.toggle('is-wrapped');
+      wrapButton.setAttribute('aria-pressed', String(wrapped));
+      wrapButton.textContent = wrapped ? '取消换行' : '自动换行';
+      pre.setAttribute('aria-label', language + (wrapped ? ' 代码，已开启自动换行' : ' 代码，可使用方向键横向滚动'));
+    });
+
+    async function copyCode(text: string) {
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch {
+          // Try a selection-based copy when clipboard access is unavailable.
+        }
+      }
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.className = 'clipboard-fallback';
+      textarea.setAttribute('readonly', '');
+      document.body.append(textarea);
+      textarea.select();
+      try {
+        if (!document.execCommand('copy')) throw new Error('Copy failed');
+      } finally {
+        textarea.remove();
+        copyButton.focus({ preventScroll: true });
+      }
+    }
+
+    let resetTimer: ReturnType<typeof setTimeout>;
+    copyButton.addEventListener('click', async () => {
+      clearTimeout(resetTimer);
+      try {
+        await copyCode(code.textContent || '');
+        copyButton.textContent = '已复制';
+        status.textContent = '代码已复制';
+      } catch {
+        copyButton.textContent = '复制失败';
+        status.textContent = '复制失败，请选中代码手动复制';
+      }
+      resetTimer = setTimeout(() => {
+        copyButton.textContent = '复制';
+        status.textContent = '';
+      }, 2000);
+    });
+  });
+</script>

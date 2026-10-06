@@ -1,0 +1,48 @@
+---
+import '../styles/global.css';
+import CodeBlocks from '../components/CodeBlocks.astro';
+import Motion from '../components/Motion.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  activeSection?: 'home' | 'notes' | 'snippets';
+}
+
+const { title, description = 'CTF 入门学习笔记与实用代码片段。', activeSection } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0c0d10" />
+    <title>{title} · CTF Notes</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href={baseUrl} aria-label="CTF Notes 首页">
+          <span class="brand-mark" aria-hidden="true">&gt;_</span>
+          <span>ctf<span class="brand-host">@local</span>:~</span>
+        </a>
+        <nav aria-label="主导航">
+          <a class:list={[{ active: activeSection === 'home' }]} aria-current={activeSection === 'home' ? 'page' : undefined} href={baseUrl}>~/ 首页</a>
+          <a class:list={[{ active: activeSection === 'notes' }]} aria-current={activeSection === 'notes' ? 'page' : undefined} href={baseUrl + 'notes/'}>./ 学习笔记</a>
+          <a class:list={[{ active: activeSection === 'snippets' }]} aria-current={activeSection === 'snippets' ? 'page' : undefined} href={baseUrl + 'snippets/'}>./ 代码片段</a>
+        </nav>
+      </header>
+      <main id="main-content"><slot /></main>
+      <footer class="site-footer">
+        <span>边学边记，循序渐进。</span>
+        <span>仅在授权的 CTF 与练习环境中使用。</span>
+      </footer>
+    </div>
+    <CodeBlocks />
+    <Motion />
+  </body>
+</html>

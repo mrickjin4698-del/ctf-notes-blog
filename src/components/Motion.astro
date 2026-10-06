@@ -1,0 +1,41 @@
+<script>
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let observer: IntersectionObserver | undefined;
+  const targets = document.querySelectorAll<HTMLElement>(
+    '.section-heading, .path-card, .note-row, .snippet-card',
+  );
+
+  function show(element: HTMLElement) {
+    element.classList.remove('reveal-pending');
+    observer?.unobserve(element);
+  }
+
+  function configureMotion() {
+    observer?.disconnect();
+    targets.forEach((element) => element.classList.remove('reveal-pending', 'scroll-reveal'));
+    if (motionPreference.matches || !('IntersectionObserver' in window)) return;
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) show(entry.target as HTMLElement);
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -24px 0px' });
+
+    targets.forEach((element, index) => {
+      element.classList.add('scroll-reveal');
+      // Keep the current viewport readable; animate later sections once on arrival.
+      if (element.getBoundingClientRect().top < window.innerHeight) return;
+      element.style.setProperty('--reveal-delay', `${(index % 3) * 45}ms`);
+      element.classList.add('reveal-pending');
+      observer?.observe(element);
+    });
+  }
+
+  document.addEventListener('focusin', (event) => {
+    if (!(event.target instanceof Element)) return;
+    const element = event.target.closest<HTMLElement>('.reveal-pending');
+    if (element) show(element);
+  });
+  motionPreference.addEventListener('change', configureMotion);
+  configureMotion();
+</script>

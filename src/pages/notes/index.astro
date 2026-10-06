@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const notes = (await getCollection('notes')).sort(
+  (a, b) => Number(a.data.sample) - Number(b.data.sample)
+    || b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+    || b.data.sequence - a.data.sequence,
+);
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title="学习笔记" description="按主题整理的 CTF 学习笔记。" activeSection="notes">
+  <section class="page-intro">
+    <p class="eyebrow">$ ls ./notes/ — {String(notes.length).padStart(2, '0')} entries</p>
+    <h1>学习笔记<span class="accent-dot">.</span></h1>
+    <p>把概念拆小，把过程记清楚。笔记以 Markdown 编写，适合随着学习持续补充。</p>
+  </section>
+  <section class="note-list note-list-page" aria-label="笔记列表">
+    {notes.map((note) => (
+      <a class="note-row" href={baseUrl + 'notes/' + note.id + '/'}>
+        <div>
+          <div class="tag-row">
+            {note.data.category && <span class="tag">{note.data.category}</span>}
+            {note.data.platform && <span class="tag">{note.data.platform}</span>}
+            {note.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+          </div>
+          <h2>{note.data.title}</h2><p>{note.data.description}</p>
+        </div>
+        <time datetime={note.data.pubDate.toISOString()}>{note.data.pubDate.toISOString().slice(0, 10)}</time>
+        <span aria-hidden="true">↗</span>
+      </a>
+    ))}
+  </section>
+</BaseLayout>

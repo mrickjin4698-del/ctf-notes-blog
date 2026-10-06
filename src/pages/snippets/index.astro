@@ -1,0 +1,32 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const snippets = await getCollection('snippets');
+const renderedSnippets = await Promise.all(
+  snippets.map(async (snippet) => ({ snippet, Content: (await render(snippet)).Content })),
+);
+---
+
+<BaseLayout title="代码片段" description="CTF 学习过程里可复用的小段代码。" activeSection="snippets">
+  <section class="page-intro">
+    <p class="eyebrow">$ cat ./snippets/* — {String(snippets.length).padStart(2, '0')} snippets</p>
+    <h1>代码片段<span class="accent-dot">.</span></h1>
+    <p>每段代码都尽量短小、独立。先读懂输入和输出，再放进自己的练习流程。</p>
+  </section>
+  <section class="snippet-grid" aria-label="代码片段列表">
+    {renderedSnippets.map(({ snippet, Content }) => (
+      <article class="snippet-card">
+        <div class="snippet-heading">
+          <div><span class="language-label">{snippet.data.language}</span><h2>{snippet.data.title}</h2></div>
+          <span class="snippet-mark" aria-hidden="true">&lt;/&gt;</span>
+        </div>
+        <p>{snippet.data.description}</p>
+        <div class="snippet-code"><Content /></div>
+        {snippet.data.noteRef && (
+          <a class="snippet-related" href={import.meta.env.BASE_URL + 'notes/' + snippet.data.noteRef + '/'}>相关学习笔记 →</a>
+        )}
+      </article>
+    ))}
+  </section>
+</BaseLayout>

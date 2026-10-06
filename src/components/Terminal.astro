@@ -1,0 +1,157 @@
+---
+interface Props {
+  count: number;
+  notes: { title: string; url: string }[];
+}
+const { count, notes } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<div class="hero-terminal" data-terminal data-base={baseUrl} data-count={count} data-notes={JSON.stringify(notes)} aria-label="博客交互终端">
+  <div class="terminal-top"><span class="terminal-title">~/ctf-notes — bash</span><span aria-hidden="true">− □ ×</span></div>
+  <div class="terminal-body">
+    <div class="terminal-transcript" role="log" aria-label="命令执行记录" aria-live="polite" aria-relevant="additions" tabindex="0">
+      <div class="terminal-entry terminal-welcome">
+        <p><span class="terminal-prompt">learner@ctf</span><span class="terminal-muted">:~$</span> ls</p>
+        <div class="terminal-directory"><a href={baseUrl + 'notes/'}>notes/</a><a href={baseUrl + 'snippets/'}>snippets/</a></div>
+        <p><span class="terminal-prompt">learner@ctf</span><span class="terminal-muted">:~$</span> cat status.txt</p>
+        <p class="terminal-output">从基础开始，保持好奇。<br />{count} 篇学习记录 · 持续记录中</p>
+      </div>
+    </div>
+    <form class="terminal-command" hidden autocomplete="off">
+      <span class="terminal-input-prompt" aria-hidden="true"><span class="terminal-prompt">learner@ctf</span><span class="terminal-muted">:~$</span></span>
+      <label class="sr-only" for="terminal-input">输入博客终端命令</label>
+      <input id="terminal-input" name="command" type="text" placeholder="help" maxlength="200" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="terminal-hint" enterkeyhint="send" />
+      <button type="submit" aria-label="执行命令">↵</button>
+    </form>
+    <p class="terminal-hint" id="terminal-hint">输入 help 查看命令 · ↑↓ 历史 · Tab 补全</p>
+    <noscript><p class="terminal-muted">启用 JavaScript 后可输入命令，也可以直接点击上方目录。</p></noscript>
+  </div>
+</div>
+
+<script>
+  const terminal = document.querySelector<HTMLElement>('[data-terminal]');
+  if (terminal) {
+    const form = terminal.querySelector<HTMLFormElement>('form')!;
+    const input = terminal.querySelector<HTMLInputElement>('input')!;
+    const transcript = terminal.querySelector<HTMLElement>('.terminal-transcript')!;
+    const base = terminal.dataset.base || '/';
+    const count = terminal.dataset.count || '0';
+    const notes: { title: string; url: string }[] = JSON.parse(terminal.dataset.notes || '[]');
+    const history: string[] = [];
+    let historyIndex = 0;
+    let draft = '';
+    let composing = false;
+    const completions = ['help', 'ls', 'ls notes', 'ls snippets', 'cat README', 'cat status.txt', 'cd notes', 'cd snippets', 'pwd', 'whoami', 'clear'];
+
+    function line(entry: HTMLElement, text: string, className = 'terminal-output') {
+      const paragraph = document.createElement('p');
+      paragraph.className = className;
+      paragraph.textContent = text;
+      entry.append(paragraph);
+    }
+
+    function link(entry: HTMLElement, title: string, url: string) {
+      const anchor = document.createElement('a');
+      anchor.className = 'terminal-result-link';
+      anchor.href = url;
+      anchor.textContent = title;
+      entry.append(anchor);
+    }
+
+    function finish(entry: HTMLElement) {
+      transcript.append(entry);
+      while (transcript.children.length > 40) transcript.firstElementChild?.remove();
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function execute(command: string) {
+      const [name, ...args] = command.split(/\s+/);
+      const argument = args.join(' ').replace(/^\.\//, '').replace(/\/$/, '');
+      const entry = document.createElement('div');
+      entry.className = 'terminal-entry';
+      line(entry, `learner@ctf:~$ ${command}`, 'terminal-echo');
+
+      switch (name.toLowerCase()) {
+        case 'help':
+          line(entry, 'help              查看命令\nls [notes]        列出目录或笔记\nls snippets       查看代码片段入口\ncat README        关于这个博客\ncat status.txt    学习记录统计\ncd notes          打开学习笔记\ncd snippets       打开代码片段\npwd / whoami      当前位置 / 用户\nclear             清空屏幕');
+          break;
+        case 'ls':
+          if (!argument || argument === '.' || argument === '~') {
+            link(entry, 'notes/', base + 'notes/');
+            link(entry, 'snippets/', base + 'snippets/');
+            line(entry, 'README  status.txt');
+          } else if (argument === 'notes') {
+            notes.forEach((note) => link(entry, note.title, note.url));
+          } else if (argument === 'snippets') {
+            link(entry, 'snippets/ → 打开代码片段', base + 'snippets/');
+          } else line(entry, `ls: 没有这个目录：${argument}`, 'terminal-error');
+          break;
+        case 'cat':
+          if (['readme', 'readme.md'].includes(argument.toLowerCase())) {
+            line(entry, 'CTF Notes — 个人 CTF 学习日志\n记录概念、解题过程和实用脚本。\n从基础开始，边学边记。');
+            link(entry, '开始阅读 →', base + 'notes/');
+          } else if (argument === 'status.txt') {
+            line(entry, `${count} 篇学习记录 · 持续记录中\n方向：编码 / 取证 / 逆向 / 密码学`);
+          } else line(entry, argument ? `cat: 没有这个文件：${argument}` : '用法：cat README 或 cat status.txt', 'terminal-error');
+          break;
+        case 'cd':
+          if (argument === 'notes' || argument === 'snippets') {
+            window.location.assign(base + argument + '/');
+          } else if (!argument || ['.', '~', '..', '/'].includes(argument)) {
+            line(entry, '已在 ~/ctf-notes');
+          } else line(entry, `cd: 没有这个目录：${argument}`, 'terminal-error');
+          break;
+        case 'pwd':
+          line(entry, '~/ctf-notes');
+          break;
+        case 'whoami':
+          line(entry, 'learner — 保持好奇的 CTF 学习者');
+          break;
+        case 'clear':
+          transcript.replaceChildren();
+          return;
+        default:
+          line(entry, `未找到命令：${name}。输入 help 查看可用命令。`, 'terminal-error');
+      }
+      finish(entry);
+    }
+
+    form.hidden = false;
+    input.addEventListener('compositionstart', () => { composing = true; });
+    input.addEventListener('compositionend', () => { composing = false; });
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (composing) return;
+      const command = input.value.trim();
+      if (!command) return;
+      if (history.at(-1) !== command) history.push(command);
+      if (history.length > 50) history.shift();
+      historyIndex = history.length;
+      draft = '';
+      input.value = '';
+      execute(command);
+      input.focus({ preventScroll: true });
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.isComposing || composing) return;
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (historyIndex === history.length) draft = input.value;
+        historyIndex = Math.max(0, Math.min(history.length, historyIndex + (event.key === 'ArrowUp' ? -1 : 1)));
+        input.value = historyIndex === history.length ? draft : history[historyIndex];
+        input.setSelectionRange(input.value.length, input.value.length);
+      } else if (event.key === 'Tab' && !event.shiftKey && input.value.trim()) {
+        const matches = completions.filter((command) => command.startsWith(input.value.trim()));
+        // Let Tab move focus when there is no unique completion.
+        if (matches.length === 1) {
+          event.preventDefault();
+          input.value = matches[0];
+        }
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'l') {
+        event.preventDefault();
+        transcript.replaceChildren();
+      }
+    });
+  }
+</script>
