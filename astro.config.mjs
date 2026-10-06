@@ -6,6 +6,7 @@ const isProjectPage = Boolean(owner && repository && repository !== owner + '.gi
 export default defineConfig({
   site: owner ? 'https://' + owner + '.github.io' : 'https://example.github.io',
   base: isProjectPage ? '/' + repository : '/',
+  trailingSlash: 'always',
   markdown: {
     shikiConfig: {
       theme: {
