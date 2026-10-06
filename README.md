@@ -10,7 +10,9 @@
 
 页面带轻量入场、滚动渐入与悬停效果，遵循系统的“减少动态效果”设置。首页终端支持 help、ls notes、cat README、cat status.txt、cd notes、cd snippets、pwd、whoami 和 clear，并支持上下键历史与唯一命令的 Tab 补全。所有交互在浏览器内完成，无需后台服务。
 
-已整理「学习CTF路线」会话中的 14 篇学习记录和 10 个代码片段，涵盖编码、取证模拟题、逆向小测、XOR、GCD 和 AES。记录保留原来的错误、修正与未回答题目；题目解法与平台提交成功分开标记。原始入门笔记标为“示例”，真实记录优先展示。Flag 使用可展开的答案区。
+已整理「学习CTF路线」会话中的 14 篇学习记录和 10 个代码片段，涵盖编码、取证模拟题、逆向小测、XOR、GCD 和 AES。记录保留原来的错误、修正与未回答题目；题目解法与平台提交成功分开标记。CTF 入门介绍标为“示例”，真实记录优先展示。Flag 使用可展开的答案区。
+
+Linux 基础拆成一篇学习路线和 7 篇独立笔记，涵盖目录、文件检查、搜索、管道、权限、进程和压缩包。
 
 笔记可选填写 category、platform、status、sourceTitle、importedAt、sequence 和 sample；pubDate 使用原会话的记录日期，importedAt 表示本次整理日期。片段的 noteRef 指向对应笔记的文件名。
 
